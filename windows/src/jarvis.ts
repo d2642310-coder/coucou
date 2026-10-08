@@ -5,6 +5,8 @@ export class JarvisAssistant {
   private recognition: any = null;
   private listening = false;
   private speaking = false;
+  private continuousMode = false;
+  private wakeWordMode = false;
   private voiceGender: "male" | "female" =
     localStorage.getItem("jarvis.voiceGender") === "female"
       ? "female"
@@ -36,8 +38,34 @@ export class JarvisAssistant {
 
       this.recognition.onresult = async (event: any) => {
         const text = event.results[0][0].transcript.trim();
+        const lower = text.toLowerCase();
 
         console.log("JARVIS heard:", text);
+
+        // Wake-word gate.
+        if (this.wakeWordMode) {
+          const wakeDetected = /\b(?:hey\s+)?jarvis\b/i.test(lower);
+
+          if (!wakeDetected) {
+            return;
+          }
+
+          this.wakeWordMode = false;
+
+          const command = text
+            .replace(/\bhey\s+jarvis\b/i, "")
+            .replace(/\bjarvis\b/i, "")
+            .trim();
+
+          if (command) {
+            await this.ask(command);
+          } else {
+            this.speak("Yes, sir.");
+            setTimeout(() => this.startListening(), 900);
+          }
+
+          return;
+        }
 
         if (text) {
           await this.ask(text);
@@ -51,6 +79,14 @@ export class JarvisAssistant {
 
       this.recognition.onend = () => {
         this.listening = false;
+
+        if (this.continuousMode && !this.speaking) {
+          setTimeout(() => {
+            if (this.continuousMode && !this.listening) {
+              this.startListening();
+            }
+          }, 350);
+        }
       };
     }
   }
@@ -87,6 +123,47 @@ export class JarvisAssistant {
     console.log("JARVIS command:", command);
 
     const lower = command.toLowerCase().trim();
+
+    // Wake-word mode commands.
+    if (
+      /\b(?:enable|start|turn on)\b.*\bwake word\b/.test(lower) ||
+      /\b(?:enable|start|turn on)\b.*\bjarvis wake\b/.test(lower)
+    ) {
+      this.wakeWordMode = true;
+      this.speak("Wake word mode enabled.");
+      setTimeout(() => this.startListening(), 900);
+      return;
+    }
+
+    if (
+      /\b(?:disable|stop|turn off)\b.*\bwake word\b/.test(lower) ||
+      /\bstop jarvis wake\b/.test(lower)
+    ) {
+      this.wakeWordMode = false;
+      this.stopListening();
+      this.speak("Wake word mode disabled.");
+      return;
+    }
+
+    // Continuous conversation commands.
+    if (
+      /\b(?:start|enable|turn on)\b.*\bcontinuous\b/.test(lower) ||
+      /\bcontinuous mode\b/.test(lower)
+    ) {
+      this.continuousMode = true;
+      this.speak("Continuous mode enabled.");
+      return;
+    }
+
+    if (
+      /\b(?:stop|disable|turn off)\b.*\bcontinuous\b/.test(lower) ||
+      /\bstop listening\b/.test(lower)
+    ) {
+      this.continuousMode = false;
+      this.stopListening();
+      this.speak("Continuous mode disabled.");
+      return;
+    }
 
     // Voice switching commands.
     if (
@@ -242,6 +319,23 @@ export class JarvisAssistant {
     );
   }
 
+
+  startContinuousMode() {
+    this.continuousMode = true;
+
+    if (!this.listening && !this.speaking) {
+      this.startListening();
+    }
+  }
+
+  stopContinuousMode() {
+    this.continuousMode = false;
+    this.stopListening();
+  }
+
+  isContinuousMode() {
+    return this.continuousMode;
+  }
 
   isListening() {
     return this.listening;
