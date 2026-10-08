@@ -751,6 +751,18 @@ export class Island {
     // a terminal — so it may fold a waiting card away, as Escape in the notch
     // does on macOS.
     window.addEventListener("keydown", (e) => {
+      // JARVIS voice assistant: Ctrl + Space starts listening.
+      if (e.ctrlKey && e.code === "Space") {
+        e.preventDefault();
+        e.stopPropagation();
+
+        void import("../jarvis").then(({ jarvis }) => {
+          jarvis.startListening();
+        });
+
+        return;
+      }
+
       if (e.key === "Escape" && State.mode === "expanded") {
         if (State.pendingApproval) this.foldApproval();
         else if (!State.isPinned) this.collapse();

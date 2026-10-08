@@ -8,8 +8,6 @@ import { Ease, lerp, type EaseFn } from "../core/anim";
 import { Sound } from "../core/sound";
 import type { BotEmoteName, BotStateName } from "../core/layout";
 import { PUMPKIN_BODY, drawOutfitBehind, drawOutfitFront, makeHead } from "./outfits";
-import { drawKnight } from "./knight";
-const KNIGHT: boolean = false; // false ആക്കിയാൽ പഴയ Mochi തിരിച്ചുവരും
 import type { Outfit } from "./wardrobe";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -732,7 +730,7 @@ export class BotEngine {
       x.translate(-cx, -cy);
     }
 
-    if (!KNIGHT) this.drawHandsBehind(x, R, rx, ry, cx, cy);
+    this.drawHandsBehind(x, R, rx, ry, cx, cy);
 
     x.save();
     x.translate(cx, cy);
@@ -745,10 +743,10 @@ export class BotEngine {
     if (head) drawOutfitBehind(x, this.outfit, head, outfitState);
 
     const body = this.bodyPath(rx, ry, R);
-    if (!KNIGHT) this.drawBody(x, body, R, rx, ry);
+    this.drawBody(x, body, R, rx, ry);
 
     const blushVal = Math.max(this.blush, this.tint * 0.5) * (1 - this.morph);
-    if (!KNIGHT && blushVal > 0.01) {
+    if (blushVal > 0.01) {
       x.save();
       x.clip(body);
       const yOffset = Math.sin(this.yaw) * rx * 0.8;
@@ -761,12 +759,8 @@ export class BotEngine {
       x.restore();
     }
 
-    if (KNIGHT) {
-      drawKnight(x, 0, ry * 0.95, R * 2.4, this.yaw * 1.5, this.pitch * 1.5);
-    } else {
-      this.drawEyes(x, body, R, rx, ry);
-      if (this.morph > 0.05) this.drawMouth(x, body, R);
-    }
+    this.drawEyes(x, body, R, rx, ry);
+    if (this.morph > 0.05) this.drawMouth(x, body, R);
 
     if (head) drawOutfitFront(x, this.outfit, head, outfitState);
 

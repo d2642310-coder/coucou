@@ -10,6 +10,7 @@ import { registerIntegrationHandlers, refreshConfigured } from "./island/integra
 import { registerShortcutHandlers } from "./island/shortcuts";
 import { Recap } from "./recap/recap";
 import { onLanguageChange, resolveLanguage, setLanguage, systemLanguages } from "./i18n/i18n";
+import { jarvis } from "./jarvis";
 
 /** Shows the language Settings asks for ("" = the system's, when Coucou has it). */
 function applyLanguage() {
@@ -23,6 +24,9 @@ async function main() {
   void Sound.preload();
 
   const island = new Island(root);
+
+  // JARVIS voice assistant — Mochi remains the visual companion.
+  (window as any).jarvis = jarvis;
 
   const boot = await Bridge.boot();
   if (boot) {
