@@ -1,4 +1,5 @@
 import { Bridge } from "./core/bridge";
+import { runJarvisFastCommand } from "./jarvis-actions";
 
 export class JarvisAssistant {
   private recognition: any = null;
@@ -73,6 +74,13 @@ export class JarvisAssistant {
 
   async ask(command: string) {
     console.log("JARVIS command:", command);
+
+    // Fast local commands run without an AI request.
+    const fast = await runJarvisFastCommand(command);
+    if (fast.handled) {
+      this.speak(fast.message || "Done.");
+      return;
+    }
 
     try {
       const result = await Bridge.chatSend(command, null);

@@ -58,6 +58,9 @@ export const Bridge = {
 
   openUrl: (url: string) => call<void>("open_url", { url }),
 
+  /** JARVIS → launches a safe native Windows application. */
+  openApp: (app: string) => call<boolean>("open_app", { app }),
+
   /** "Open terminal" → opens the folder in VS Code when `code` is on PATH. */
   openInVSCode: (path: string | null) => call<boolean>("open_in_vscode", { path }),
 

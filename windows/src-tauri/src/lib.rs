@@ -181,6 +181,47 @@ fn list_monitors(app: AppHandle) -> Vec<island::MonitorChoice> {
 }
 
 #[tauri::command]
+fn open_app(app: String) -> bool {
+    let name = app.trim().to_lowercase();
+
+    // Only allow known safe applications.
+    let executable = match name.as_str() {
+        "chrome" | "google chrome" => "chrome",
+        "edge" | "microsoft edge" => "msedge",
+        "vscode" | "vs code" | "visual studio code" => "code",
+        "spotify" => "spotify",
+        "whatsapp" => "whatsapp",
+        "notepad" => "notepad",
+        "calculator" | "calc" => "calc",
+        "file explorer" | "explorer" => "explorer",
+        "powershell" => "powershell",
+        "terminal" | "windows terminal" => "wt",
+        "settings" => "ms-settings:",
+        _ => return false,
+    };
+
+    #[cfg(windows)]
+    {
+        if executable.ends_with(':') {
+            return Command::new("cmd")
+                .args(["/C", "start", "", executable])
+                .spawn()
+                .is_ok();
+        }
+
+        return Command::new(executable)
+            .spawn()
+            .is_ok();
+    }
+
+    #[cfg(not(windows))]
+    {
+        let _ = executable;
+        false
+    }
+}
+
+#[tauri::command]
 fn open_url(url: String) {
     if !(url.starts_with("http://") || url.starts_with("https://")) {
         return;
@@ -656,6 +697,7 @@ pub fn run() {
             reposition,
             list_monitors,
             open_url,
+            open_app,
             open_in_vscode,
             open_session,
             open_claude_desktop,
